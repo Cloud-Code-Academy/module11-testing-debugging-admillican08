@@ -1,8 +1,8 @@
 /*
- * The `LeadTrigger` is designed to automate certain processes around the Lead object in Salesforce. 
- * This trigger invokes various methods from the `LeadTriggerHandler` class based on different trigger 
+ * The `LeadTrigger` is designed to automate certain processes around the Lead object in Salesforce.
+ * This trigger invokes various methods from the `LeadTriggerHandler` class based on different trigger
  * events like insert and update.
- * 
+ *
  * Here's a brief rundown of the operations:
  * 1. BEFORE INSERT and BEFORE UPDATE:
  *    - Normalize the Lead's title for consistency using `handleTitleNormalization` method.
@@ -15,21 +15,37 @@
  * - It's essential to test the trigger thoroughly after making any changes to ensure its correct functionality.
  * - Debugging skills will be tested, so students should look out for discrepancies between the expected and actual behavior.
  */
-trigger LeadTrigger on Lead(before insert) {
-	switch on Trigger.operationType {
-		when BEFORE_INSERT {
-			LeadTriggerHandler.handleTitleNormalization(Trigger.new);
-			LeadTriggerHandler.handleAutoLeadScoring(Trigger.new);
-		}
-		when BEFORE_UPDATE {
-			LeadTriggerHandler.handleTitleNormalization(Trigger.new);
-			LeadTriggerHandler.handleAutoLeadScoring(Trigger.new);
-		}
-		when AFTER_INSERT {
-			LeadTriggerHandler.handleLeadAutoConvert(Trigger.new);
-		}
-		when AFTER_UPDATE {
-			LeadTriggerHandler.handleLeadAutoConvert(Trigger.new);
-		}
-	}
+trigger LeadTrigger on Lead(
+  before insert,
+  before update,
+  after insert,
+  after update
+) {
+  if (!LeadTriggerHandler.isDisabled) {
+    switch on Trigger.operationType {
+      when BEFORE_INSERT {
+        //System.debug('**Running Before Insert Trigger on Lead');
+        LeadTriggerHandler.handleTitleNormalization(Trigger.new);
+        LeadTriggerHandler.handleAutoLeadScoring(Trigger.new);
+      }
+      when BEFORE_UPDATE {
+        //System.debug('**Running Before Update Trigger on Lead');
+        LeadTriggerHandler.handleTitleNormalization(Trigger.new);
+        LeadTriggerHandler.handleAutoLeadScoring(Trigger.new);
+      }
+      when AFTER_INSERT {
+        //System.debug('**Running After Insert Trigger on Lead');
+        LeadTriggerHandler.handleLeadAutoConvert(null, Trigger.newMap);
+      }
+      when AFTER_UPDATE {
+        //System.debug('**Running After Update Trigger on Lead');
+        LeadTriggerHandler.handleLeadAutoConvert(
+          Trigger.oldMap,
+          Trigger.newMap
+        );
+      }
+    }
+  } else {
+    System.debug('**Lead Trigger is disabled');
+  }
 }
